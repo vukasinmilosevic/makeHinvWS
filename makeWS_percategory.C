@@ -12,7 +12,8 @@
 #include "TH1F.h"
 #include "RooDataHist.h"
 #include "RooFormulaVar.h"
-#include "../../interface/RooParametricHist.h"
+//#include "../../interface/RooParametricHist.h"
+#include "../HiggsAnalysis/CombinedLimit/interface/RooParametricHist.h"
 //#include "/afs/cern.ch/user/v/vmilosev/CMSSW_10_2_13/src/HiggsAnalysis/CombinedLimit/interface/RooParametricHist.h"
 #include "RooAddition.h"
 
@@ -63,66 +64,66 @@ int makeWS_percategory(std::string year="2017", std::string cat="MTR"){
 			      "DY","EWKZll",
 			      "TOP","VV","QCD"};
 
-    const unsigned nN = 20;
-    std::string lNuis[20] = {"bjet_veto","pileup","tau_veto",
+    const unsigned nN = is2017 ? 21 : 20;
+    std::string lNuis[21] = {"bjet_veto","pileup","tau_veto",
 			     "eventVetoVEleIdIso","eventVetoLMuId","eventVetoLMuIso",
 			     "eventSelTEleIdIso","eventSelTMuId","eventSelTMuIso",
       			     "eventSelVEleIdIso","eventSelLMuId","eventSelLMuIso",
                              "fnlo_SF_QCD_corr_EWK_proc", "fnlo_SF_EWK_corr",
                              "fnlo_SF_QCD_corr_QCD_proc_muF","fnlo_SF_QCD_corr_QCD_proc_muR","fnlo_SF_QCD_corr_QCD_proc_pdf",
-                             "eventSelVEleReco", "eventSelTEleReco", "eventVetoVEleReco"
+                             "eventSelVEleReco", "eventSelTEleReco", "eventVetoVEleReco","prefiring"
     };
 
-    const bool corrCat[20] = {1,1,1,
+    const bool corrCat[21] = {1,1,1,
 			      1,1,1,
 			      1,1,1,
 			      1,1,1,
 			      0,0,
 			      0,0,0,
-			      1,1,1
+			      1,1,1,1
     };
-    const bool corrYear[20] = {1,1,0,
+    const bool corrYear[21] = {1,1,0,
 			       1,1,1,
 			       1,1,1,
 			       1,1,1,
 			       1,1,
 			       1,1,1,
-			       1,1,1
+			       1,1,1,1
     };
 
     const unsigned nS = 2*nN+1;
-    std::string lSysts[41];
+    std::string lSysts[43];
     for (unsigned iS(0); iS<nS; ++iS){
       if (iS==0) lSysts[iS] = "";
       else lSysts[iS] = (iS-1)%2==0? lNuis[(iS-1)/2]+"Up" : lNuis[(iS-1)/2]+"Down";
       //std::cout << lSysts[iS] << std::endl;
     }
-    const bool isSRsyst[41] = {1,1,1,1,1,
+    const bool isSRsyst[43] = {1,1,1,1,1,
 			       1,1,1,1,1,
 			       1,1,1,0,0,
 			       0,0,0,0,0,
 			       0,0,0,0,0,
                                1,1,1,1,
                                1,1,1,1,1,1,
-                               0,0,0,0,1,1};
+                               0,0,0,0,1,1,1,1};
 
-    const bool isCRWsyst[41] = {1,1,1,1,1,
+    const bool isCRWsyst[43] = {1,1,1,1,1,
 				1,1,0,0,0,
 				0,0,0,1,1,
 				1,1,1,1,0,
 				0,0,0,0,0,
                                 1,1,1,1,
                                 1,1,1,1,1,1,
-                                0,0,1,1,0,0};
+                                0,0,1,1,0,0,1,1};
 
-    const bool isCRZsyst[41] = {1,1,1,1,1,
+    const bool isCRZsyst[43] = {1,1,1,1,1,
                                 1,1,0,0,0,
                                 0,0,0,1,1,
                                 1,1,1,1,1,
                                 1,1,1,1,1,
                                 1,1,1,1,
                                 1,1,1,1,1,1,
-                                1,1,1,1,0,0};			       
+                                1,1,1,1,0,0,1,1};			       
 
     //possibility to override nuisances with hardcoded values
     double hardCodeNuisance[nR][nS];
@@ -229,7 +230,9 @@ int makeWS_percategory(std::string year="2017", std::string cat="MTR"){
     for (unsigned iR(0); iR<nR; ++iR){
       
       finput[iR] = TFile::Open(lInFileName[iR].c_str());
-      finput[iR]->cd(lRegions[iR].c_str());
+
+      if ( lRegions[iR] != "SR" ) finput[iR]->cd((lRegions[iR]+lChannel).c_str());
+      else finput[iR]->cd(lRegions[iR].c_str());
       
       for (unsigned iP(0); iP<nP; ++iP){
 	for (unsigned iS(0); iS < nS; ++iS){
@@ -297,7 +300,7 @@ int makeWS_percategory(std::string year="2017", std::string cat="MTR"){
     // SR/CR remaining non-cancellations from JES uncertainties.
     RooRealVar *wzratio[nT];
     //JES fully correlated across years, JER fully uncorrelated
-    RooRealVar *jes = new RooRealVar("CMS_VBF_scale_j", "JES nuisance parameter", 0);
+    RooRealVar *jes = new RooRealVar("CMS_scale_j_jesRelativeBal", "JES nuisance parameter", 0);
     RooRealVar *jer = new RooRealVar(("CMS_res_j_"+year).c_str(), "JER nuisance parameter", 0);
     //RooRealVar *jesZZ[nT];
     //RooRealVar *jerZZ[nT];
